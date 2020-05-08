@@ -1,0 +1,7 @@
+.CalculatorDisplay {
+    min-height: 7rem;
+}
+
+.CalculatorDisplay .card-header-title {
+    display: block;
+}
