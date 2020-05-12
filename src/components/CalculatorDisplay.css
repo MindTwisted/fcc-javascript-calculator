@@ -5,3 +5,7 @@
 .CalculatorDisplay .card-header-title {
     display: block;
 }
+
+.CalculatorDisplay__calculationsQueue {
+    min-height: 2rem;
+}

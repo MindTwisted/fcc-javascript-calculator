@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import useCalculatorState from './useCalculatorState'
+import CalculationEngine from '../helpers/CalculationEngine'
 
 const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 const operators = ['-', '+', '/', '*']
@@ -162,8 +163,57 @@ test('should process operator input when current input contains operator and cal
         result.current.processInput(input)
       })
 
-      expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.calculationsQueue)
+      if (input === '-') {
+        expect(result.current.state.calculationsQueue).toBe(
+            `${initialCalculatorState.calculationsQueue} ${initialCalculatorState.currentInput}`
+        )
+        expect(result.current.state.currentInput).toBe(input)
+      } else {
+        expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.calculationsQueue)
+        expect(result.current.state.currentInput).toBe(input)
+      }
+    })
+  })
+})
+
+test('should process operator input when current input contains minus operator and calculations queue ends with operator', () => {
+  operators.forEach(initialStateOperator => {
+    const initialCalculatorState = {
+      calculationsQueue: `255 ${initialStateOperator}`,
+      currentInput: '-'
+    }
+
+    operators.forEach(inputOperator => {
+      const input = inputOperator
+      const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+      act(() => {
+        result.current.processInput(input)
+      })
+
+      expect(result.current.state.calculationsQueue).toBe('255')
       expect(result.current.state.currentInput).toBe(input)
+    })
+  })
+})
+
+test('should process number input when current input contains minus operator and calculations queue ends with operator', () => {
+  operators.forEach(initialStateOperator => {
+    const initialCalculatorState = {
+      calculationsQueue: `255 ${initialStateOperator}`,
+      currentInput: '-'
+    }
+
+    numbers.forEach(number => {
+      const input = number
+      const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+      act(() => {
+        result.current.processInput(input)
+      })
+
+      expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.calculationsQueue)
+      expect(result.current.state.currentInput).toBe(`-${input}`)
     })
   })
 })
@@ -215,41 +265,84 @@ test('should process operator input when current input contains number and calcu
 })
 
 test('should be able to calculate result when calculation queue contains expression and current input contains number', () => {
-  const initialCalculatorState = {
-    calculationsQueue: '255 + 323 -',
-    currentInput: '100'
-  }
+  const testCases = [
+    {
+      calculationsQueue: '255 + 323 -',
+      currentInput: '100'
+    },
+    {
+      calculationsQueue: '1000 - 2500 + 333 / 7575 -',
+      currentInput: '1002'
+    },
+    {
+      calculationsQueue: '1000 - 333 / 7575 -',
+      currentInput: '-5002'
+    },
+    {
+      calculationsQueue: '777 + 88 /',
+      currentInput: '9999'
+    }
+  ]
 
-  const input = '='
-  const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+  testCases.forEach(testCase => {
+    const initialCalculatorState = {
+      calculationsQueue: testCase.calculationsQueue,
+      currentInput: testCase.currentInput
+    }
 
-  act(() => {
-    result.current.processInput(input)
+    const input = '='
+    const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+    act(() => {
+      result.current.processInput(input)
+    })
+
+    const resultCalculationsQueue = `${initialCalculatorState.calculationsQueue} ${initialCalculatorState.currentInput}`
+    const calculationsResult = CalculationEngine.processCalculation(resultCalculationsQueue)
+
+    expect(result.current.state.calculationsQueue).toBe(
+        `${resultCalculationsQueue} = ${calculationsResult}`
+    )
+    expect(result.current.state.currentInput).toBe(calculationsResult)
   })
-
-  expect(result.current.state.calculationsQueue).toBe(
-      `${initialCalculatorState.calculationsQueue} ${initialCalculatorState.currentInput} = ${255 + 323 - 100}`
-  )
-  expect(result.current.state.currentInput).toBe(String(255 + 323 - 100))
 })
 
 test('should be able to calculate result when calculation queue contains expression and current input contains operator', () => {
-  const initialCalculatorState = {
-    calculationsQueue: '255 + 323 - 100',
-    currentInput: '+'
-  }
+  const testCases = [
+    {
+      calculationsQueue: '255 + 323 - 100',
+      currentInput: '+'
+    },
+    {
+      calculationsQueue: '333 - 555 * 233 / 222',
+      currentInput: '-'
+    },
+    {
+      calculationsQueue: '88 / 9999',
+      currentInput: '-'
+    }
+  ]
 
-  const input = '='
-  const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+  testCases.forEach(testCase => {
+    const initialCalculatorState = {
+      calculationsQueue: testCase.calculationsQueue,
+      currentInput: testCase.currentInput
+    }
 
-  act(() => {
-    result.current.processInput(input)
+    const input = '='
+    const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+    act(() => {
+      result.current.processInput(input)
+    })
+
+    const calculationsResult = CalculationEngine.processCalculation(initialCalculatorState.calculationsQueue)
+
+    expect(result.current.state.calculationsQueue).toBe(
+        `${initialCalculatorState.calculationsQueue} = ${calculationsResult}`
+    )
+    expect(result.current.state.currentInput).toBe(calculationsResult)
   })
-
-  expect(result.current.state.calculationsQueue).toBe(
-      `${initialCalculatorState.calculationsQueue} = ${255 + 323 - 100}`
-  )
-  expect(result.current.state.currentInput).toBe(String(255 + 323 - 100))
 })
 
 test('should be able to calculate result when calculation queue is empty and current input contains number', () => {
@@ -271,41 +364,92 @@ test('should be able to calculate result when calculation queue is empty and cur
   expect(result.current.state.currentInput).toBe(initialCalculatorState.currentInput)
 })
 
-test('should be able to continue calculations with the result of previous calculation', () => {
+test('should not be able to calculate result when calculation queue and current input are empty', () => {
   const initialCalculatorState = {
-    calculationsQueue: '25 + 25 - 10 = 40',
-    currentInput: '40'
+    calculationsQueue: '',
+    currentInput: ''
   }
 
-  operators.forEach(operator => {
-    const input = operator
-    const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+  const input = '='
+  const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
 
-    act(() => {
-      result.current.processInput(input)
+  act(() => {
+    result.current.processInput(input)
+  })
+
+  expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.calculationsQueue)
+  expect(result.current.state.currentInput).toBe(initialCalculatorState.currentInput)
+})
+
+test('should be able to continue calculations with the result of previous calculation', () => {
+  const testCases = [
+    {
+      calculationsQueue: '25 + 25 - 10 = 40',
+      currentInput: '40'
+    },
+    {
+      calculationsQueue: '255 - 300 = -45',
+      currentInput: '-45'
+    },
+    {
+      calculationsQueue: '88 / 9999 = ‭0.0088‬',
+      currentInput: '0.0088'
+    }
+  ]
+
+  testCases.forEach(testCase => {
+    const initialCalculatorState = {
+      calculationsQueue: testCase.calculationsQueue,
+      currentInput: testCase.currentInput
+    }
+
+    operators.forEach(operator => {
+      const input = operator
+      const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+      act(() => {
+        result.current.processInput(input)
+      })
+
+      expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.currentInput)
+      expect(result.current.state.currentInput).toBe(input)
     })
-
-    expect(result.current.state.calculationsQueue).toBe(initialCalculatorState.currentInput)
-    expect(result.current.state.currentInput).toBe(input)
   })
 })
 
 test('should be able to start new calculation when the result of previous calculation is on the display', () => {
-  const initialCalculatorState = {
-    calculationsQueue: '25 + 25 - 10 = 40',
-    currentInput: '40'
-  }
+  const testCases = [
+    {
+      calculationsQueue: '25 + 25 - 10 = 40',
+      currentInput: '40'
+    },
+    {
+      calculationsQueue: '255 - 300 = -45',
+      currentInput: '-45'
+    },
+    {
+      calculationsQueue: '55 / 999 = 0.0551‬',
+      currentInput: '0.0551'
+    }
+  ]
 
-  numbers.forEach(number => {
-    const input = number
-    const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+  testCases.forEach(testCase => {
+    const initialCalculatorState = {
+      calculationsQueue: testCase.calculationsQueue,
+      currentInput: testCase.currentInput
+    }
 
-    act(() => {
-      result.current.processInput(input)
+    numbers.forEach(number => {
+      const input = number
+      const { result } = renderHook(() => useCalculatorState({ ...initialCalculatorState }))
+
+      act(() => {
+        result.current.processInput(input)
+      })
+
+      expect(result.current.state.calculationsQueue).toBe('')
+      expect(result.current.state.currentInput).toBe(input)
     })
-
-    expect(result.current.state.calculationsQueue).toBe('')
-    expect(result.current.state.currentInput).toBe(input)
   })
 })
 

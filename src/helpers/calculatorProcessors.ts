@@ -4,14 +4,19 @@ import {
   isDot,
   isEmptyString,
   isEqualOperator,
+  isMinusOperator,
   isNumber,
   isOperator,
-  isStringEndsWithNumber, isStringEndsWithOperator,
+  isStringEndsWithNumber,
+  isStringEndsWithOperator,
   isStringOfNumbers,
   isStringOfNumbersEndsWithDot,
-  isStringOfNumbersWithDotInTheMiddle, isStringWithEqualOperator,
-  isZero
+  isStringOfNumbersWithDotInTheMiddle,
+  isStringWithEqualOperator,
+  isZero,
+  trimOperatorFromTheEndOfTheString
 } from './utils'
+import CalculationEngine from './CalculationEngine'
 
 export interface CalculatorProcessor {
     isApply: (value: string, state: CalculatorState) => boolean
@@ -19,6 +24,22 @@ export interface CalculatorProcessor {
 }
 
 const calculatorProcessors: CalculatorProcessor[] = [
+  {
+    isApply (value, state) {
+      return state.currentInput.length >= 15 &&
+          !isStringWithEqualOperator(state.calculationsQueue) &&
+          (
+            isNumber(value) ||
+            isDot(value)
+          )
+    },
+    process (value, state) {
+      return {
+        calculationsQueue: state.calculationsQueue,
+        currentInput: state.currentInput
+      }
+    }
+  },
   {
     isApply (value, state) {
       return isNumber(value) &&
@@ -95,6 +116,20 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return isNumber(value) &&
+          isMinusOperator(state.currentInput) &&
+          isStringEndsWithOperator(state.calculationsQueue) &&
+          !isStringWithEqualOperator(state.calculationsQueue)
+    },
+    process (value, state) {
+      return {
+        calculationsQueue: state.calculationsQueue,
+        currentInput: `-${value}`
+      }
+    }
+  },
+  {
+    isApply (value, state) {
+      return isNumber(value) &&
           isOperator(state.currentInput) &&
           !isEqualOperator(state.currentInput) &&
           !isStringWithEqualOperator(state.calculationsQueue)
@@ -121,9 +156,39 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return isOperator(value) &&
+          isMinusOperator(state.currentInput) &&
+          isStringEndsWithOperator(state.calculationsQueue) &&
+          !isStringWithEqualOperator(state.calculationsQueue)
+    },
+    process (value, state) {
+      return {
+        calculationsQueue: trimOperatorFromTheEndOfTheString(state.calculationsQueue),
+        currentInput: value
+      }
+    }
+  },
+  {
+    isApply (value, state) {
+      return isMinusOperator(value) &&
+          isOperator(state.currentInput) &&
+          isStringEndsWithNumber(state.calculationsQueue) &&
+          !isStringWithEqualOperator(state.calculationsQueue)
+    },
+    process (value, state) {
+      return {
+        calculationsQueue: appendToString(state.currentInput, state.calculationsQueue, true),
+        currentInput: value
+      }
+    }
+  },
+  {
+    isApply (value, state) {
+      return isOperator(value) &&
+          !isMinusOperator(value) &&
           !isEqualOperator(value) &&
           isOperator(state.currentInput) &&
-          isStringEndsWithNumber(state.calculationsQueue)
+          isStringEndsWithNumber(state.calculationsQueue) &&
+          !isStringWithEqualOperator(state.calculationsQueue)
     },
     process (value, state) {
       return {
@@ -152,6 +217,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return isOperator(value) &&
+          !isEqualOperator(value) &&
           isEmptyString(state.calculationsQueue) &&
           isEmptyString(state.currentInput)
     },
@@ -206,8 +272,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       const calculationsQueue = appendToString(state.currentInput, state.calculationsQueue, true)
-      // eslint-disable-next-line no-eval
-      const calculationResult = String(eval(calculationsQueue))
+      const calculationResult = CalculationEngine.processCalculation(calculationsQueue)
 
       return {
         calculationsQueue: `${calculationsQueue} = ${calculationResult}`,
@@ -222,8 +287,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
           isStringEndsWithNumber(state.calculationsQueue)
     },
     process (value, state) {
-      // eslint-disable-next-line no-eval
-      const calculationResult = String(eval(state.calculationsQueue))
+      const calculationResult = CalculationEngine.processCalculation(state.calculationsQueue)
 
       return {
         calculationsQueue: `${state.calculationsQueue} = ${calculationResult}`,
@@ -238,12 +302,24 @@ const calculatorProcessors: CalculatorProcessor[] = [
           isEmptyString(state.calculationsQueue)
     },
     process (value, state) {
-      // eslint-disable-next-line no-eval
-      const calculationResult = String(eval(state.currentInput))
+      const calculationResult = CalculationEngine.processCalculation(state.currentInput)
 
       return {
         calculationsQueue: `${state.currentInput} = ${calculationResult}`,
         currentInput: calculationResult
+      }
+    }
+  },
+  {
+    isApply (value, state) {
+      return isEqualOperator(value) &&
+          isEmptyString(state.currentInput) &&
+          isEmptyString(state.calculationsQueue)
+    },
+    process (value, state) {
+      return {
+        calculationsQueue: state.calculationsQueue,
+        currentInput: state.currentInput
       }
     }
   }

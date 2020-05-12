@@ -14,9 +14,7 @@ const initialCalculatorState: CalculatorState = {
 export default function useCalculatorState (initialState: CalculatorState | null = null) {
   const [state, setState] = useState<CalculatorState>(initialState || initialCalculatorState)
   const processInput = (value: string) => {
-    if (state.currentInput.length < 15) {
-      setState(CalculatorInputManager.processInput(value, state))
-    }
+    setState(CalculatorInputManager.processInput(value, state))
   }
   const resetCalculator = () => {
     setState(initialCalculatorState)
