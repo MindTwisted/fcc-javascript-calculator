@@ -1,22 +1,18 @@
 import { CalculatorState } from '../hooks/useCalculatorState'
 import {
-  appendToString,
   isDot,
   isEmptyString,
   isEqualOperator,
   isMinusOperator,
   isNumber,
   isOperator,
-  isStringEndsWithNumber,
-  isStringEndsWithOperator,
   isStringOfNumbers,
   isStringOfNumbersEndsWithDot,
   isStringOfNumbersWithDotInTheMiddle,
-  isStringWithEqualOperator,
-  isZero,
-  trimOperatorFromTheEndOfTheString
+  isZero
 } from './utils'
 import CalculationEngine from './CalculationEngine'
+import CalculationQueue from './CalculationQueue'
 
 export interface CalculatorProcessor {
     isApply: (value: string, state: CalculatorState) => boolean
@@ -27,7 +23,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return state.currentInput.length >= 15 &&
-          !isStringWithEqualOperator(state.calculationsQueue) &&
+          !state.calculationsQueue.isFinished() &&
           (
             isNumber(value) ||
             isDot(value)
@@ -35,7 +31,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
         currentInput: state.currentInput
       }
     }
@@ -44,12 +40,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isNumber(value) &&
           isEmptyString(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
-        currentInput: appendToString(value, state.currentInput)
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: `${state.currentInput}${value}`
       }
     }
   },
@@ -58,32 +54,38 @@ const calculatorProcessors: CalculatorProcessor[] = [
       return isNumber(value) &&
           !isZero(value) &&
            isZero(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
-      return state
+      return {
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: state.currentInput
+      }
     }
   },
   {
     isApply (value, state) {
       return isZero(value) &&
            isZero(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
-      return state
+      return {
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: state.currentInput
+      }
     }
   },
   {
     isApply (value, state) {
       return isNumber(value) &&
           isStringOfNumbers(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
-        currentInput: appendToString(value, state.currentInput)
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: `${state.currentInput}${value}`
       }
     }
   },
@@ -91,12 +93,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isNumber(value) &&
           isStringOfNumbersEndsWithDot(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
-        currentInput: appendToString(value, state.currentInput)
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: `${state.currentInput}${value}`
       }
     }
   },
@@ -104,12 +106,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isNumber(value) &&
           isStringOfNumbersWithDotInTheMiddle(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
-        currentInput: appendToString(value, state.currentInput)
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: `${state.currentInput}${value}`
       }
     }
   },
@@ -117,12 +119,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isNumber(value) &&
           isMinusOperator(state.currentInput) &&
-          isStringEndsWithOperator(state.calculationsQueue) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithOperator() &&
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
         currentInput: `-${value}`
       }
     }
@@ -132,11 +134,11 @@ const calculatorProcessors: CalculatorProcessor[] = [
       return isNumber(value) &&
           isOperator(state.currentInput) &&
           !isEqualOperator(state.currentInput) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: appendToString(state.currentInput, state.calculationsQueue, true),
+        calculationsQueue: state.calculationsQueue.appendToQueue(state.currentInput),
         currentInput: value
       }
     }
@@ -148,8 +150,8 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
-        currentInput: appendToString(value, state.currentInput)
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
+        currentInput: `${state.currentInput}${value}`
       }
     }
   },
@@ -157,12 +159,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isOperator(value) &&
           isMinusOperator(state.currentInput) &&
-          isStringEndsWithOperator(state.calculationsQueue) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithOperator() &&
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: trimOperatorFromTheEndOfTheString(state.calculationsQueue),
+        calculationsQueue: state.calculationsQueue.removeOperatorFromTheEndOfTheQueue(),
         currentInput: value
       }
     }
@@ -171,12 +173,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isMinusOperator(value) &&
           isOperator(state.currentInput) &&
-          isStringEndsWithNumber(state.calculationsQueue) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithNumber() &&
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: appendToString(state.currentInput, state.calculationsQueue, true),
+        calculationsQueue: state.calculationsQueue.appendToQueue(state.currentInput),
         currentInput: value
       }
     }
@@ -187,12 +189,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
           !isMinusOperator(value) &&
           !isEqualOperator(value) &&
           isOperator(state.currentInput) &&
-          isStringEndsWithNumber(state.calculationsQueue) &&
-          !isStringWithEqualOperator(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithNumber() &&
+          !state.calculationsQueue.isFinished()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
         currentInput: value
       }
     }
@@ -201,7 +203,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isOperator(value) &&
           !isEqualOperator(value) &&
-          !isStringWithEqualOperator(state.calculationsQueue) &&
+          !state.calculationsQueue.isFinished() &&
           (
             isStringOfNumbers(state.currentInput) ||
             isStringOfNumbersWithDotInTheMiddle(state.currentInput)
@@ -209,7 +211,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       return {
-        calculationsQueue: appendToString(state.currentInput, state.calculationsQueue, true),
+        calculationsQueue: state.calculationsQueue.appendToQueue(state.currentInput),
         currentInput: value
       }
     }
@@ -218,12 +220,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isOperator(value) &&
           !isEqualOperator(value) &&
-          isEmptyString(state.calculationsQueue) &&
+          state.calculationsQueue.isEmpty() &&
           isEmptyString(state.currentInput)
     },
     process (value) {
       return {
-        calculationsQueue: '0',
+        calculationsQueue: new CalculationQueue(['0']),
         currentInput: value
       }
     }
@@ -232,7 +234,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isOperator(value) &&
           !isEqualOperator(value) &&
-          isStringWithEqualOperator(state.calculationsQueue) &&
+          state.calculationsQueue.isFinished() &&
           (
             isStringOfNumbers(state.currentInput) ||
             isStringOfNumbersWithDotInTheMiddle(state.currentInput)
@@ -240,7 +242,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       return {
-        calculationsQueue: state.currentInput,
+        calculationsQueue: new CalculationQueue([state.currentInput]),
         currentInput: value
       }
     }
@@ -248,7 +250,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return isNumber(value) &&
-          isStringWithEqualOperator(state.calculationsQueue) &&
+          state.calculationsQueue.isFinished() &&
           (
             isStringOfNumbers(state.currentInput) ||
             isStringOfNumbersWithDotInTheMiddle(state.currentInput)
@@ -256,7 +258,7 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value) {
       return {
-        calculationsQueue: '',
+        calculationsQueue: new CalculationQueue(),
         currentInput: value
       }
     }
@@ -268,14 +270,14 @@ const calculatorProcessors: CalculatorProcessor[] = [
             isStringOfNumbers(state.currentInput) ||
             isStringOfNumbersWithDotInTheMiddle(state.currentInput)
           ) &&
-          isStringEndsWithOperator(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithOperator()
     },
     process (value, state) {
-      const calculationsQueue = appendToString(state.currentInput, state.calculationsQueue, true)
+      const calculationsQueue = state.calculationsQueue.appendToQueue(state.currentInput)
       const calculationResult = CalculationEngine.processCalculation(calculationsQueue)
 
       return {
-        calculationsQueue: `${calculationsQueue} = ${calculationResult}`,
+        calculationsQueue: calculationsQueue.appendToQueue('=').appendToQueue(calculationResult),
         currentInput: calculationResult
       }
     }
@@ -284,13 +286,13 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isEqualOperator(value) &&
           isOperator(state.currentInput) &&
-          isStringEndsWithNumber(state.calculationsQueue)
+          state.calculationsQueue.isEndsWithNumber()
     },
     process (value, state) {
       const calculationResult = CalculationEngine.processCalculation(state.calculationsQueue)
 
       return {
-        calculationsQueue: `${state.calculationsQueue} = ${calculationResult}`,
+        calculationsQueue: state.calculationsQueue.appendToQueue('=').appendToQueue(calculationResult),
         currentInput: calculationResult
       }
     }
@@ -298,15 +300,19 @@ const calculatorProcessors: CalculatorProcessor[] = [
   {
     isApply (value, state) {
       return isEqualOperator(value) &&
-          isStringOfNumbers(state.currentInput) &&
-          isEmptyString(state.calculationsQueue)
+          (
+            isStringOfNumbers(state.currentInput) ||
+            isStringOfNumbersWithDotInTheMiddle(state.currentInput)
+          ) &&
+          state.calculationsQueue.isEmpty()
     },
     process (value, state) {
-      const calculationResult = CalculationEngine.processCalculation(state.currentInput)
-
       return {
-        calculationsQueue: `${state.currentInput} = ${calculationResult}`,
-        currentInput: calculationResult
+        calculationsQueue: state.calculationsQueue
+          .appendToQueue(state.currentInput)
+          .appendToQueue('=')
+          .appendToQueue(state.currentInput),
+        currentInput: state.currentInput
       }
     }
   },
@@ -314,11 +320,11 @@ const calculatorProcessors: CalculatorProcessor[] = [
     isApply (value, state) {
       return isEqualOperator(value) &&
           isEmptyString(state.currentInput) &&
-          isEmptyString(state.calculationsQueue)
+          state.calculationsQueue.isEmpty()
     },
     process (value, state) {
       return {
-        calculationsQueue: state.calculationsQueue,
+        calculationsQueue: new CalculationQueue(state.calculationsQueue.getQueueAsArray()),
         currentInput: state.currentInput
       }
     }

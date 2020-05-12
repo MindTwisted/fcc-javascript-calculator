@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import CalculatorInputManager from '../helpers/CalculatorInputManager'
+import CalculationQueue from '../helpers/CalculationQueue'
 
 export interface CalculatorState {
-  calculationsQueue: string
+  calculationsQueue: CalculationQueue
   currentInput: string
 }
 
 const initialCalculatorState: CalculatorState = {
-  calculationsQueue: '',
+  calculationsQueue: new CalculationQueue(),
   currentInput: ''
 }
 

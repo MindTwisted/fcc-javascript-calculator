@@ -1,15 +1,21 @@
+import CalculationQueue from './CalculationQueue'
+
 const availableNumberOfDecimalPlaces = 4
 
 const CalculationEngine = {
-  processCalculation (expression: string): string {
+  calculateQueue (calculationQueue: CalculationQueue): number {
     // eslint-disable-next-line no-eval
-    const calculationResult = eval(expression)
-
-    if (this.getTheNumberOfDecimalPlaces(calculationResult) > availableNumberOfDecimalPlaces) {
-      return calculationResult.toFixed(availableNumberOfDecimalPlaces)
+    return eval(calculationQueue.getQueueAsArray().join(' '))
+  },
+  formatOutput (result: number): string {
+    if (this.getTheNumberOfDecimalPlaces(result) > availableNumberOfDecimalPlaces) {
+      return result.toFixed(availableNumberOfDecimalPlaces)
     }
 
-    return String(calculationResult)
+    return String(result)
+  },
+  processCalculation (calculationQueue: CalculationQueue): string {
+    return this.formatOutput(this.calculateQueue(calculationQueue))
   },
   getTheNumberOfDecimalPlaces (number: number): number {
     const numbersAfterDecimal = String(number).match(/^[0-9]+\.([0-9]+)$/)
