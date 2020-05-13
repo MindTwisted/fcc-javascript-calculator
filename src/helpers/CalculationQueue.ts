@@ -44,6 +44,50 @@ class CalculationQueue {
     public isEmpty (): boolean {
       return this.queue.length === 0
     }
+
+    public isValidForCalculation (): boolean {
+      if (this.isFinished()) {
+        return false
+      }
+
+      return this.isValidStructured()
+    }
+
+    public isProperlyCalculated (): boolean {
+      if (!this.isFinished()) {
+        return false
+      }
+
+      return this.isValidStructured()
+    }
+
+    public getCalculationResult (): string | null {
+      if (!this.isProperlyCalculated()) {
+        return null
+      }
+
+      return this.queue[this.queue.indexOf('=') + 1]
+    }
+
+    private isValidStructured (): boolean {
+      for (let i = 0; i < this.queue.length; i++) {
+        const currentItem = this.queue[i]
+        const isEven = i % 2 === 0
+
+        if (isEven && !(
+          isStringOfNumbers(currentItem) ||
+                isStringOfNumbersWithDotInTheMiddle(currentItem)
+        )) {
+          return false
+        }
+
+        if (!isEven && !isOperator(currentItem)) {
+          return false
+        }
+      }
+
+      return true
+    }
 }
 
 export default CalculationQueue
