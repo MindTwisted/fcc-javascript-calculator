@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "https://mindtwisted.github.io/fcc-javascript-calculator/static/css/main.8c87e368.chunk.css",
+    "main.js": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/main.b173db04.chunk.js",
+    "main.js.map": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/main.b173db04.chunk.js.map",
+    "runtime-main.js": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/runtime-main.700a0900.js",
+    "runtime-main.js.map": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/runtime-main.700a0900.js.map",
+    "static/css/2.cd1899df.chunk.css": "https://mindtwisted.github.io/fcc-javascript-calculator/static/css/2.cd1899df.chunk.css",
+    "static/js/2.29de5731.chunk.js": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/2.29de5731.chunk.js",
+    "static/js/2.29de5731.chunk.js.map": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/2.29de5731.chunk.js.map",
+    "index.html": "https://mindtwisted.github.io/fcc-javascript-calculator/index.html",
+    "precache-manifest.931d18174a231c2c611fdf23ce821064.js": "https://mindtwisted.github.io/fcc-javascript-calculator/precache-manifest.931d18174a231c2c611fdf23ce821064.js",
+    "service-worker.js": "https://mindtwisted.github.io/fcc-javascript-calculator/service-worker.js",
+    "static/css/2.cd1899df.chunk.css.map": "https://mindtwisted.github.io/fcc-javascript-calculator/static/css/2.cd1899df.chunk.css.map",
+    "static/css/main.8c87e368.chunk.css.map": "https://mindtwisted.github.io/fcc-javascript-calculator/static/css/main.8c87e368.chunk.css.map",
+    "static/js/2.29de5731.chunk.js.LICENSE.txt": "https://mindtwisted.github.io/fcc-javascript-calculator/static/js/2.29de5731.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.700a0900.js",
+    "static/css/2.cd1899df.chunk.css",
+    "static/js/2.29de5731.chunk.js",
+    "static/css/main.8c87e368.chunk.css",
+    "static/js/main.b173db04.chunk.js"
+  ]
+}
