@@ -274,11 +274,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
     },
     process (value, state) {
       const calculationsQueue = state.calculationsQueue.appendToQueue(state.currentInput)
-      const calculationResult = CalculationEngine.processCalculation(calculationsQueue)
+      const resultQueue = CalculationEngine.processCalculation(calculationsQueue)
+      const resultInput = resultQueue.getCalculationResult()
 
       return {
-        calculationsQueue: calculationsQueue.appendToQueue('=').appendToQueue(calculationResult),
-        currentInput: calculationResult
+        calculationsQueue: resultQueue,
+        currentInput: resultInput
       }
     }
   },
@@ -289,11 +290,12 @@ const calculatorProcessors: CalculatorProcessor[] = [
           state.calculationsQueue.isEndsWithNumber()
     },
     process (value, state) {
-      const calculationResult = CalculationEngine.processCalculation(state.calculationsQueue)
+      const resultQueue = CalculationEngine.processCalculation(state.calculationsQueue)
+      const resultInput = resultQueue.getCalculationResult()
 
       return {
-        calculationsQueue: state.calculationsQueue.appendToQueue('=').appendToQueue(calculationResult),
-        currentInput: calculationResult
+        calculationsQueue: resultQueue,
+        currentInput: resultInput
       }
     }
   },

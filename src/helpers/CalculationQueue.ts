@@ -61,9 +61,9 @@ class CalculationQueue {
       return this.isValidStructured()
     }
 
-    public getCalculationResult (): string | null {
+    public getCalculationResult (): string {
       if (!this.isProperlyCalculated()) {
-        return null
+        throw Error('Can\'t get calculation result from the queue that wasn\'t properly calculated')
       }
 
       return this.queue[this.queue.indexOf('=') + 1]

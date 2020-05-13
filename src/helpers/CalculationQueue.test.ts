@@ -100,6 +100,7 @@ test('it should be able to get calculation result from the properly calculated q
   const invalidFinishedQueue = new CalculationQueue(['22', '+', '33', '-', '44', '=', '+', '33'])
   const validFinishedQueue = new CalculationQueue(['22', '+', '33', '-', '44', '=', '11'])
 
-  expect(invalidFinishedQueue.getCalculationResult()).toBeNull()
+  expect(() => invalidFinishedQueue.getCalculationResult())
+    .toThrowError('Can\'t get calculation result from the queue that wasn\'t properly calculated')
   expect(validFinishedQueue.getCalculationResult()).toBe('11')
 })

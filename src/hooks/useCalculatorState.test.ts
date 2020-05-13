@@ -307,17 +307,12 @@ test('should be able to calculate result when calculation queue contains express
       result.current.processInput(input)
     })
 
-    const resultCalculationsQueue = initialCalculatorState.calculationsQueue
-      .appendToQueue(initialCalculatorState.currentInput)
-    const calculationsResult = CalculationEngine.formatOutput(
-      // eslint-disable-next-line no-eval
-      eval(resultCalculationsQueue.getQueueAsArray().join(' '))
+    const resultQueue = CalculationEngine.processCalculation(
+      initialCalculatorState.calculationsQueue.appendToQueue(initialCalculatorState.currentInput)
     )
 
-    expect(result.current.state.calculationsQueue.getQueueAsArray()).toEqual(
-      [...resultCalculationsQueue.getQueueAsArray(), '=', calculationsResult]
-    )
-    expect(result.current.state.currentInput).toBe(calculationsResult)
+    expect(result.current.state.calculationsQueue.getQueueAsArray()).toEqual(resultQueue.getQueueAsArray())
+    expect(result.current.state.currentInput).toBe(resultQueue.getCalculationResult())
   })
 })
 
@@ -350,15 +345,10 @@ test('should be able to calculate result when calculation queue contains express
       result.current.processInput(input)
     })
 
-    const calculationsResult = CalculationEngine.formatOutput(
-      // eslint-disable-next-line no-eval
-      eval(initialCalculatorState.calculationsQueue.getQueueAsArray().join(' '))
-    )
+    const resultQueue = CalculationEngine.processCalculation(initialCalculatorState.calculationsQueue)
 
-    expect(result.current.state.calculationsQueue.getQueueAsArray()).toEqual(
-      [...initialCalculatorState.calculationsQueue.getQueueAsArray(), '=', calculationsResult]
-    )
-    expect(result.current.state.currentInput).toBe(calculationsResult)
+    expect(result.current.state.calculationsQueue.getQueueAsArray()).toEqual(resultQueue.getQueueAsArray())
+    expect(result.current.state.currentInput).toBe(resultQueue.getCalculationResult())
   })
 })
 
